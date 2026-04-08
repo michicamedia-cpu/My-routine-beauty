@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>My Daily Routine</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #eeede9;
+    --text: #1a1a18;
+    --text2: #6b6b67;
+    --text3: #a0a09c;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --green: #1D9E75;
+    --green-dark: #0F6E56;
+    --green-light: #E1F5EE;
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e;
+      --bg2: #2c2c2e;
+      --bg3: #3a3a3c;
+      --text: #f2f2f0;
+      --text2: #a0a09c;
+      --text3: #6b6b67;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.18);
+      --green-light: #0a3d2b;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--bg2); color: var(--text); min-height: 100vh; }
+  .app { max-width: 480px; margin: 0 auto; padding: 0 0 3rem; }
+  .header { background: var(--bg); border-bottom: 0.5px solid var(--border); padding: 1rem 1.25rem 0.75rem; position: sticky; top: 0; z-index: 10; }
+  .header h1 { font-size: 22px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+  .header .date { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .day-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 0.75rem 1.25rem; scrollbar-width: none; background: var(--bg); border-bottom: 0.5px solid var(--border); }
+  .day-tabs::-webkit-scrollbar { display: none; }
+  .day-btn { flex-shrink: 0; padding: 5px 13px; border-radius: 16px; border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text2); font-size: 13px; font-family: inherit; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+  .day-btn.active { background: var(--green); color: #fff; border-color: var(--green); font-weight: 500; }
+  .day-btn.is-today:not(.active) { border-color: var(--green); color: var(--green-dark); }
+  .progress-wrap { padding: 0.75rem 1.25rem 0; background: var(--bg); }
+  .progress-label { font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+  .progress-track { background: var(--bg3); border-radius: 10px; height: 4px; overflow: hidden; }
+  .progress-fill { height: 4px; background: var(--green); border-radius: 10px; transition: width 0.3s; }
+  .content { padding: 1rem 1.25rem; }
+  .section { margin-bottom: 1.25rem; }
+  .section-label { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+  .section-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .dot-am { background: #EF9F27; }
+  .dot-midday { background: #378ADD; }
+  .dot-night { background: #7F77DD; }
+  .dot-hair { background: #639922; }
+  .step-list { display: flex; flex-direction: column; gap: 6px; }
+  .step { display: flex; align-items: flex-start; gap: 10px; padding: 11px 13px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; transition: opacity 0.15s; }
+  .step.done { opacity: 0.45; }
+  .step.done .step-name { text-decoration: line-through; }
+  .check-ring { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border2); flex-shrink: 0; margin-top: 0px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .step.done .check-ring { background: var(--green); border-color: var(--green); }
+  .check-tick { display: none; }
+  .step.done .check-tick { display: block; }
+  .step-body { flex: 1; min-width: 0; }
+  .step-name { font-size: 14px; color: var(--text); line-height: 1.35; }
+  .step-note { font-size: 12px; color: var(--text2); margin-top: 2px; line-height: 1.3; }
+  .footer { text-align: center; padding: 0.5rem; }
+  .reset-btn { font-size: 13px; color: var(--text3); background: none; border: none; font-family: inherit; cursor: pointer; padding: 8px 16px; -webkit-tap-highlight-color: transparent; }
+  .empty-hair { font-size: 13px; color: var(--text3); padding: 8px 0; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>My Daily Routine</h1>
+    <div class="date" id="dateDisplay"></div>
+  </div>
+  <div class="day-tabs" id="dayTabs"></div>
+  <div class="progress-wrap">
+    <div class="progress-label" id="progressLabel"></div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+  <div class="content" id="content"></div>
+  <div class="footer"><button class="reset-btn" onclick="resetDay()">Reset checklist</button></div>
+</div>
+
+<script>
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+const R = {
+  0: {
+    am:[
+      {n:'Vitamin C serum'},
+      {n:'Clarins Double Serum'},
+      {n:'SPF 50',x:'Essential daily'},
+    ],
+    midday:[
+      {n:'Rhode Glazing Mist',x:'2–3 sprays midday refresh'},
+    ],
+    night:[
+      {n:'Elemis Cleansing Balm',x:'Step 1 of double cleanse'},
+      {n:'Elemis Cleansing Milk',x:'Step 2 of double cleanse'},
+      {n:'Lactic acid pad',x:'Exfoliation — max 2x/week (Sun + Wed)'},
+      {n:'Cicalfate+',x:'Avoid eyelids — lash extensions'},
+      {n:'Heel care cream'},
+    ],
+    hair:[],
+  },
+  1: {
+    am:[
+      {n:'Vitamin C serum'},
+      {n:'Clarins Double Serum'},
+      {n:'SPF 50'},
+    ],
+    midday:[{n:'Rhode Glazing Mist',x:'Midday refresh'}],
+    night:[
+      {n:'Elemis Cleansing Balm',x:'Step 1 of double cleanse'},
+      {n:'Elemis Cleansing Milk',x:'Step 2 of double cleanse'},
+      {n:'Azelaic acid',x:'Do NOT use on exfoliation nights'},
+      {n:'Olay Peptide Serum'},
+      {n:'Hydro Boost Water Cream'},
+      {n:'Peptide moisturizer or Cicalfate+'},
+    ],
+    hair:[
+      {n:'OGX Coconut Mist pre-wash',x:'Apply 10 min before shower'},
+      {n:'Double shampoo — EverPure Bond Repair'},
+      {n:'EverPure Bond Repair conditioner'},
+      {n:'Dermroller (scalp)',x:'Before minoxidil'},
+      {n:'Foam minoxidil 5%'},
+      {n:'The Ordinary Peptide Scalp Serum',x:'Daily — after minoxidil'},
+    ],
+  },
+  2: {
+    am:[
+      {n:'Vitamin C serum'},
+      {n:'Clarins Double Serum'},
+      {n:'SPF 50'},
+    ],
+    midday:[{n:'Rhode Glazing Mist',x:'Midday refresh'}],
+    night:[
+      {n:'Elemis Cleansing Balm',x:'Step 1 of double cleanse'},
+      {n:'Elemis Cleansing Milk',x:'Step 2 of double cleanse'},
+      {n:'Olay Peptide Serum'},
+      {n:'Hydro Boost Water Cream'},
+      {n:'Elemis moisturizer'},
+    ],
+    hair:[
+      {n:'The Ordinary Peptide Scalp Serum',x:'Daily — on dry scalp'},
+      {n:'Foam minoxidil 5%'},
+    ],
+  },
+  3: {
+    am:[
+      {n:'Vitamin C serum'},
+      {n:'Clarins Double Serum'},
+      {n:'SPF 50'},
+    ],
+    midday:[{n:'Rhode Glazing Mist',x:'Midday refresh'}],
+    night:[
+      {n:'Elemis Cleansing Balm',x:'Step 1 of double cleanse'},
+      {n:'Elemis Cleansing Milk',x:'Step 2 of double cleanse'},
+      {n:'Lactic acid pad',x:'Exfoliation day — NO azelaic tonight'},
+      {n:'Cicalfate+',x:'Avoid eyelids'},
+    ],
+    hair:[
+      {n:'OGX Coconut Mist pre-wash',x:'10 min before shower'},
+      {n:'Dermroller (scalp)',x:'Before minoxidil'},
+      {n:'Double shampoo — Nizoral',x:'Anti-fungal scalp wash'},
+      {n:'Dove Intensive Moisture conditioner'},
+      {n:'Pantene Miracle Mask',x:'Leave a few mins, rinse'},
+      {n:'Foam minoxidil 5%'},
+      {n:'The Ordinary Peptide Scalp Serum'},
+    ],
+  },
+  4: {
+    am:[
+      {n:'Vitamin C serum'},
+      {n:'Clarins Double Serum'},
+      {n:'SPF 50'},
+      {n:'Luna Bronze (optional)',x:'Only if maintaining a vacation tan'},
+    ],
+    midday:[{n:'Rhode Glazing Mist',x:'Midday refresh'}],
+    night:[
+      {n:'Elemis Cleansing Balm',x:'Step 1 of double cleanse'},
+      {n:'Elemis Cleansing Milk',x:'Step 2 of double cleanse'},
+      {n:'Azelaic acid'},
+      {n:'Olay Peptide Serum'},
+      {n:'Hydro Boost Water Cream'},
+      {n:'Peptide moisturizer or Cicalfate+'},
+    ],
+    hair:[
+      {n:'The Ordinary Peptide Scalp Serum',x:'Daily'},
+      {n:'Foam minoxidil 5%'},
+    ],
+  },
+  5: {
+    am:[
+      {n:'Vitamin C serum'},
+      {n:'Clarins Double Serum'},
+      {n:'SPF 50'},
+    ],
+    midday:[{n:'Rhode Glazing Mist',x:'Midday refresh'}],
+    night:[
+      {n:'Elemis Cleansing Balm',x:'Step 1 of double cleanse'},
+      {n:'Elemis Cleansing Milk',x:'Step 2 of double cleanse'},
+      {n:'Olay Peptide Serum'},
+      {n:'Hydro Boost Water Cream'},
+      {n:'Elemis moisturizer'},
+    ],
+    hair:[
+      {n:'The Ordinary Peptide Scalp Serum',x:'Daily'},
+      {n:'Foam minoxidil 5%'},
+    ],
+  },
+  6: {
+    am:[
+      {n:'Vitamin C serum'},
+      {n:'Clarins Double Serum'},
+      {n:'SPF 50'},
+    ],
+    midday:[{n:'Rhode Glazing Mist',x:'Midday refresh'}],
+    night:[
+      {n:'Elemis Cleansing Balm',x:'Step 1 of double cleanse'},
+      {n:'Elemis Cleansing Milk',x:'Step 2 of double cleanse'},
+      {n:'Dr Jart mask',x:'Weekly mask treatment'},
+      {n:'Olay Peptide Serum'},
+      {n:'Hydro Boost Water Cream'},
+      {n:'Elemis or Cicalfate+'},
+      {n:'Heel care cream'},
+    ],
+    hair:[
+      {n:'OGX Coconut Mist pre-wash',x:'10 min before shower'},
+      {n:'Dermroller (scalp)',x:'Before minoxidil'},
+      {n:'Double shampoo — Nizoral',x:'2nd Nizoral wash of the week'},
+      {n:'Dove Intensive Moisture conditioner'},
+      {n:'EverPure 5-min gloss treatment',x:'Leave 5 min, rinse'},
+      {n:'Foam minoxidil 5%'},
+      {n:'The Ordinary Peptide Scalp Serum'},
+    ],
+  },
+};
+
+const SEC = {
+  am:     {label:'Morning',        dot:'dot-am'},
+  midday: {label:'Midday refresh', dot:'dot-midday'},
+  night:  {label:'Night',          dot:'dot-night'},
+  hair:   {label:'Hair',           dot:'dot-hair'},
+};
+
+const today = new Date().getDay();
+let active = today;
+let checked = {};
+
+function key(d,s,i){ return `rtn_${d}_${s}_${i}`; }
+
+function load(d){
+  checked = {};
+  ['am','midday','night','hair'].forEach(s=>{
+    (R[d][s]||[]).forEach((_,i)=>{
+      try{ if(localStorage.getItem(key(d,s,i))==='1') checked[s+'_'+i]=true; }catch(e){}
+    });
+  });
+}
+
+function save(d,s,i,v){
+  try{ localStorage.setItem(key(d,s,i),v?'1':'0'); }catch(e){}
+}
+
+function toggle(s,i){
+  const k=s+'_'+i;
+  checked[k]=!checked[k];
+  save(active,s,i,checked[k]);
+  render();
+}
+
+function resetDay(){
+  if(!confirm('Reset all steps for '+FULL[active]+'?')) return;
+  ['am','midday','night','hair'].forEach(s=>{
+    (R[active][s]||[]).forEach((_,i)=>{ checked[s+'_'+i]=false; save(active,s,i,false); });
+  });
+  render();
+}
+
+function buildTabs(){
+  const el=document.getElementById('dayTabs');
+  el.innerHTML='';
+  DAYS.forEach((d,i)=>{
+    const b=document.createElement('button');
+    b.className='day-btn'+(i===active?' active':'')+(i===today&&i!==active?' is-today':'');
+    b.textContent=d+(i===today?' ·':'');
+    b.onclick=()=>{ active=i; load(i); render(); buildTabs(); };
+    el.appendChild(b);
+  });
+}
+
+function countAll(d){
+  let total=0,done=0;
+  ['am','midday','night','hair'].forEach(s=>{
+    (R[d][s]||[]).forEach((_,i)=>{ total++; if(checked[s+'_'+i]) done++; });
+  });
+  return {total,done};
+}
+
+function render(){
+  const now=new Date();
+  document.getElementById('dateDisplay').textContent=active===today
+    ? now.toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'})
+    : FULL[active];
+
+  const {total,done}=countAll(active);
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressLabel').textContent=`${done} of ${total} steps complete`;
+
+  const content=document.getElementById('content');
+  content.innerHTML='';
+  const r=R[active];
+
+  ['am','midday','night','hair'].forEach(s=>{
+    const steps=r[s]||[];
+    const meta=SEC[s];
+    const sec=document.createElement('div');
+    sec.className='section';
+
+    if(s==='hair'&&!steps.length){
+      sec.innerHTML=`<div class="section-label"><span class="section-dot ${meta.dot}"></span>${meta.label}</div><div class="empty-hair">No wash today — apply minoxidil &amp; scalp serum as usual</div>`;
+      content.appendChild(sec);
+      return;
+    }
+    if(!steps.length) return;
+
+    sec.innerHTML=`<div class="section-label"><span class="section-dot ${meta.dot}"></span>${meta.label}</div>`;
+    const list=document.createElement('div');
+    list.className='step-list';
+    steps.forEach((step,i)=>{
+      const isDone=!!checked[s+'_'+i];
+      const div=document.createElement('div');
+      div.className='step'+(isDone?' done':'');
+      div.onclick=()=>toggle(s,i);
+      div.innerHTML=`<div class="check-ring"><svg class="check-tick" width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="step-body"><div class="step-name">${step.n}</div>${step.x?`<div class="step-note">${step.x}</div>`:''}</div>`;
+      list.appendChild(div);
+    });
+    sec.appendChild(list);
+    content.appendChild(sec);
+  });
+}
+
+load(active);
+buildTabs();
+render();
+</script>
+</body>
+</html>
