@@ -109,6 +109,9 @@
 
   .footer { text-align: center; padding: 1.5rem; }
   .reset-btn { font-size: 12px; color: var(--text3); background: none; border: none; font-family: inherit; cursor: pointer; }
+  .save-btn { display: block; width: calc(100% - 2rem); margin: 0 1rem 0.75rem; padding: 18px; background: var(--accent); color: #fff; border: none; border-radius: 28px; font-size: 16px; font-weight: 600; font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; letter-spacing: 0.2px; box-shadow: 0 2px 12px rgba(74,84,120,0.18); }
+  .save-btn:disabled { opacity: 0.5; }
+  .save-status { text-align: center; font-size: 12px; color: var(--text2); margin-bottom: 0.5rem; min-height: 18px; }
 </style>
 </head>
 <body>
@@ -136,6 +139,8 @@
   <div class="divider"></div>
   <div id="k18Banner"></div>
   <div class="sections" id="sections"></div>
+  <div class="save-status" id="saveStatus"></div>
+  <button class="save-btn" id="saveBtn" onclick="saveSummary()">Save today's summary</button>
   <div class="footer"><button class="reset-btn" onclick="resetDay()">Reset today</button></div>
 </div>
 
@@ -620,6 +625,69 @@ function renderHairBody(body) {
     <div class="hair-type-label">${WASH_LABELS[wash]}</div>
     <button class="hair-change-btn" onclick="openModal();">Change wash type</button>`;
   body.appendChild(logged);
+}
+
+// ── Google Sheets logging ─────────────────────────────────────────
+const WEBHOOK = 'https://script.google.com/macros/s/AKfycbyi-MdwBcruCN3q8o9AHv9BmYNwB4cIpsTpviH8bSojoAlQ72ZF0Zbp2RhEfMVpJkRP/exec';
+
+function getNightType(d) {
+  if(d===6) return 'Mask (Sat)';
+  if([0,2,4].includes(d)) return 'Exfoliation (A)';
+  return 'Treatment (B)';
+}
+
+async function saveSummary() {
+  const btn = document.getElementById('saveBtn');
+  const status = document.getElementById('saveStatus');
+  btn.disabled = true;
+  status.textContent = 'Saving…';
+
+  // build counts for each section
+  const amSteps = SKINCARE.am;
+  const amDone = amSteps.filter((_,i) => checked['am_'+i]).length;
+
+  const midSteps = SKINCARE.midday;
+  const midDone = midSteps.filter((_,i) => checked['midday_'+i]).length;
+
+  const nightSteps = getNightSteps(active);
+  const nightDone = nightSteps.filter((_,i) => checked['night_'+i]).length;
+
+  const wash = get(hairWashKey(active)) || 'None';
+  const hairSteps = wash !== 'None' ? getHairSteps(wash) : [];
+  const hairDone = hairSteps.filter((_,i) => hairChecked[i]).length;
+
+  const totalSteps = amSteps.length + midSteps.length + nightSteps.length + hairSteps.length;
+  const totalDone = amDone + midDone + nightDone + hairDone;
+  const pct = totalSteps ? Math.round(totalDone/totalSteps*100)+'%' : '0%';
+
+  const now = new Date();
+  const payload = {
+    date: calDateStr(active),
+    day: FULL[active],
+    morning: `${amDone}/${amSteps.length}`,
+    midday: `${midDone}/${midSteps.length}`,
+    nightType: getNightType(active),
+    night: `${nightDone}/${nightSteps.length}`,
+    hairWash: WASH_LABELS[wash] || 'None',
+    hair: hairSteps.length ? `${hairDone}/${hairSteps.length}` : 'No wash',
+    overall: pct,
+    notes: '',
+  };
+
+  try {
+    await fetch(WEBHOOK, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload),
+    });
+    status.textContent = '✓ Saved to Google Sheets';
+    set('dr_saved_'+calDateStr(active), '1');
+    setTimeout(()=>{ status.textContent=''; }, 3000);
+  } catch(err) {
+    status.textContent = 'Could not save — check your connection';
+  }
+  btn.disabled = false;
 }
 
 // ── Init ──────────────────────────────────────────────────────────
