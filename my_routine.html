@@ -25,7 +25,8 @@
     --dot-hair: #3d7a5e;
     --radius: 16px;
   }
-  body { font-family: 'Jost', 'Century Gothic', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  body { font-family: 'Jost', 'Century Gothic', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overscroll-behavior-y: none; }
+  body::before { content: ''; position: fixed; top: -100px; left: 0; right: 0; height: 100px; background: var(--accent); z-index: 49; }
 
   /* ── LOADING SCREEN ── */
   #loader {
@@ -63,7 +64,6 @@
     background: var(--accent);
     padding: 14px 20px;
     display: flex; align-items: center; gap: 12px;
-    border-radius: 0 0 20px 20px;
     position: sticky; top: 0; z-index: 50;
   }
   .top-bar-mark svg { width: 32px; height: 32px; }
