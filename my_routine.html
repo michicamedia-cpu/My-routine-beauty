@@ -321,7 +321,7 @@ function unmarkDermrollerToday() { saveDermrollerDates(cleanDermrollerDates().fi
 function getLastK18() { return get('dr_last_k18') || null; }
 function setLastK18(d) { set('dr_last_k18', d); }
 function daysSinceK18() {
-  const last = getLastK18(); if(!last) return 999;
+  const last = getLastK18(); if(!last) return 0;
   return Math.floor((new Date(todayStr()) - new Date(last)) / 86400000);
 }
 function k18Dismissed() { return get('dr_k18_dismiss') === todayStr(); }
@@ -484,8 +484,8 @@ function selectWash(type) {
 function renderK18Banner() {
   const el = document.getElementById('k18Banner');
   const days = daysSinceK18();
-  if(days >= 12 && !k18Dismissed()) {
-    const daysText = days===999 ? 'No K18 wash logged yet — start your 12-day cycle.' : `It's been ${days} days since your last bond treatment.`;
+  if(days >= 10 && !k18Dismissed()) {
+    const daysText = `It's been ${days} days since your last bond treatment.`;
     el.innerHTML = `
       <div class="k18-banner">
         <div class="k18-banner-icon-wrap">💊</div>
