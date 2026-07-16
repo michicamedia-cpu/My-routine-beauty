@@ -641,7 +641,7 @@ async function saveSummary() {
   const totalSteps=SKINCARE.am.length+SKINCARE.midday.length+nightSteps.length+hairSteps.length;
   const totalDone=amDone+midDone+nightDone+hairDone;
   const payload={
-    date:calDateStr(active), day:FULL[active],
+    date: String(calDateStr(active)), day:FULL[active],
     morning:`${amDone}/${SKINCARE.am.length}`,
     midday:`${midDone}/${SKINCARE.midday.length}`,
     nightType:getNightType(active),
