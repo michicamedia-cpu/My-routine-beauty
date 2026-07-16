@@ -4,17 +4,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Daily Ritual</title>
+<title>The Ritual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #e8eaf0;
+    --bg: #eceef3;
     --card: #ffffff;
-    --card2: #f4f5f8;
-    --text: #2c3347;
+    --text: #262b34;
     --text2: #7a8099;
     --text3: #b0b5c8;
-    --accent: #4a5478;
+    --accent: #3f5c86;
+    --accent-light: #4f6e9b;
+    --navy: #2e3d55;
     --green: #3d7a5e;
     --dot-am: #c9954a;
     --dot-mid: #5b7abf;
@@ -22,26 +25,67 @@
     --dot-hair: #3d7a5e;
     --radius: 16px;
   }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-  .app { max-width: 430px; margin: 0 auto; padding: 0 0 3rem; }
+  body { font-family: 'Jost', 'Century Gothic', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-  /* HEADER */
-  .header { padding: 2rem 1.5rem 1rem; }
-  .header-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  /* ── LOADING SCREEN ── */
+  #loader {
+    position: fixed; inset: 0; background: var(--accent);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 999; transition: opacity 0.6s ease;
+  }
+  #loader.fade-out { opacity: 0; pointer-events: none; }
+  .loader-mark { position: relative; width: 160px; height: 160px; display: flex; align-items: center; justify-content: center; }
+  .loader-ring {
+    position: absolute; border-radius: 50%; border: 2px solid rgba(255,255,255,0.85);
+    animation: ripple 2s ease-out infinite;
+  }
+  .loader-ring:nth-child(1) { width: 144px; height: 144px; animation-delay: 0s; }
+  .loader-ring:nth-child(2) { width: 144px; height: 144px; animation-delay: 0.4s; }
+  .loader-ring:nth-child(3) { width: 144px; height: 144px; animation-delay: 0.8s; }
+  @keyframes ripple {
+    0%   { transform: scale(0.4); opacity: 0.9; }
+    100% { transform: scale(1.4); opacity: 0; }
+  }
+  .loader-inner {
+    position: relative; z-index: 2; display: flex; align-items: center; justify-content: center;
+  }
+  .loader-inner svg { width: 76px; height: 76px; }
+  .loader-text { margin-top: 32px; text-align: center; }
+  .loader-title { font-size: 32px; font-weight: 300; letter-spacing: 10px; color: #fff; }
+  .loader-sub { font-size: 11px; font-weight: 500; letter-spacing: 6px; color: rgba(255,255,255,0.8); margin-top: 6px; }
+
+  /* ── APP ── */
+  .app { max-width: 430px; margin: 0 auto; padding: 0 0 3rem; opacity: 0; transition: opacity 0.4s ease; }
+  .app.visible { opacity: 1; }
+
+  /* ── HEADER ── */
+  .top-bar {
+    background: var(--accent);
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px;
+    border-radius: 0 0 20px 20px;
+  }
+  .top-bar-mark svg { width: 32px; height: 32px; }
+  .top-bar-title { font-size: 20px; font-weight: 300; letter-spacing: 5px; color: #fff; }
+
+  .header { padding: 1.5rem 1.5rem 0.75rem; }
   .header-day { font-size: 42px; font-weight: 300; color: var(--text); letter-spacing: -1px; line-height: 1; font-family: Georgia, 'Times New Roman', serif; }
-  .header-sub { font-size: 13px; color: var(--text2); margin-top: 6px; }
+  .header-sub { font-size: 13px; color: var(--text2); margin-top: 6px; font-weight: 400; }
   .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+
+  /* Progress ring */
+  .progress-ring-wrap { margin-top: 4px; }
   .progress-ring { transform: rotate(-90deg); }
-  .ring-bg { fill: none; stroke: var(--card); stroke-width: 4; }
-  .ring-fill { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset 0.4s ease; }
-  .ring-label { font-size: 11px; fill: var(--text2); text-anchor: middle; dominant-baseline: middle; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+  .ring-bg { fill: none; stroke: rgba(0,0,0,0.08); stroke-width: 5; }
+  .ring-fill { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.4s ease; }
+  .ring-pct { font-size: 13px; font-weight: 600; fill: var(--accent); text-anchor: middle; dominant-baseline: middle; font-family: 'Jost', sans-serif; }
 
   /* DAY TABS */
-  .day-tabs { display: flex; justify-content: space-between; padding: 0 1.5rem 1.25rem; }
+  .day-tabs { display: flex; justify-content: space-between; padding: 1rem 1.5rem 1.25rem; }
   .day-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px 6px; -webkit-tap-highlight-color: transparent; }
-  .day-circle { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .day-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
   .day-letter { font-size: 13px; font-weight: 500; color: var(--text3); }
-  .day-btn.active .day-circle { background: var(--accent); }
+  .day-btn.active .day-circle { background: var(--navy); }
   .day-btn.active .day-letter { color: #fff; font-weight: 600; }
   .day-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text3); opacity: 0; }
   .day-btn.is-today .day-dot { background: var(--accent); opacity: 1; }
@@ -50,7 +94,7 @@
 
   /* SECTIONS */
   .sections { padding: 0 1rem; display: flex; flex-direction: column; gap: 10px; }
-  .section-card { background: var(--card); border-radius: var(--radius); overflow: hidden; }
+  .section-card { background: var(--card); border-radius: var(--radius); overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
   .section-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
   .section-header-left { display: flex; align-items: center; gap: 10px; }
   .sec-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
@@ -64,11 +108,11 @@
   .section-card.open .chevron { transform: rotate(180deg); }
   .section-body { display: none; border-top: 0.5px solid rgba(0,0,0,0.06); }
   .section-card.open .section-body { display: block; }
+
   .step { display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px; border-bottom: 0.5px solid rgba(0,0,0,0.05); cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; transition: opacity 0.15s; }
   .step:last-child { border-bottom: none; }
   .step.done { opacity: 0.4; }
   .step.done .step-name { text-decoration: line-through; }
-  .step.dimmed { opacity: 0.35; pointer-events: none; }
   .check-circle { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--text3); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
   .step.done .check-circle { background: var(--accent); border-color: var(--accent); }
   .check-icon { display: none; }
@@ -78,9 +122,9 @@
   .step-note { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.3; }
   .optional-tag { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text3); background: var(--bg); padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
 
-  /* HAIR SECTION */
+  /* HAIR */
   .hair-empty { padding: 16px; }
-  .hair-wash-btn { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm, 10px); font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; letter-spacing: 0.3px; -webkit-tap-highlight-color: transparent; }
+  .hair-wash-btn { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: 12px; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; letter-spacing: 0.3px; -webkit-tap-highlight-color: transparent; }
   .hair-logged { padding: 12px 16px; }
   .hair-type-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--dot-hair); margin-bottom: 4px; }
   .hair-change-btn { font-size: 14px; color: var(--text2); background: var(--bg); border: 0.5px solid var(--text3); border-radius: 10px; font-family: inherit; cursor: pointer; padding: 12px 16px; display: block; width: 100%; margin-top: 10px; text-align: center; -webkit-tap-highlight-color: transparent; }
@@ -105,31 +149,68 @@
   .k18-banner-text { flex: 1; min-width: 0; }
   .k18-banner-title { font-size: 14px; font-weight: 700; color: var(--accent); }
   .k18-banner-sub { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.4; }
-  .k18-banner-btn { flex-shrink: 0; background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+  .k18-banner-btn { flex-shrink: 0; background: var(--navy); color: #fff; border: none; border-radius: var(--radius); padding: 10px 14px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
 
-  .footer { text-align: center; padding: 1.5rem; }
-  .reset-btn { font-size: 12px; color: var(--text3); background: none; border: none; font-family: inherit; cursor: pointer; }
-  .save-btn { display: block; width: calc(100% - 2rem); margin: 0 1rem 0.75rem; padding: 18px; background: var(--accent); color: #fff; border: none; border-radius: 28px; font-size: 16px; font-weight: 600; font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; letter-spacing: 0.2px; box-shadow: 0 2px 12px rgba(74,84,120,0.18); }
+  /* SAVE BUTTON */
+  .save-status { text-align: center; font-size: 12px; color: var(--text2); margin: 0.75rem 0 0.25rem; min-height: 18px; }
+  .save-btn { display: block; width: calc(100% - 2rem); margin: 0 1rem 0.75rem; padding: 18px; background: var(--navy); color: #fff; border: none; border-radius: var(--radius); font-size: 16px; font-weight: 600; font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; letter-spacing: 0.2px; box-shadow: 0 2px 12px rgba(46,61,85,0.22); }
   .save-btn:disabled { opacity: 0.5; }
-  .save-status { text-align: center; font-size: 12px; color: var(--text2); margin-bottom: 0.5rem; min-height: 18px; }
+  .footer { text-align: center; padding: 0.5rem 1.5rem 1.5rem; }
+  .reset-btn { font-size: 12px; color: var(--text3); background: none; border: none; font-family: inherit; cursor: pointer; }
 </style>
 </head>
 <body>
-<div class="app">
+
+<!-- LOADING SCREEN -->
+<div id="loader">
+  <div class="loader-mark">
+    <div class="loader-ring"></div>
+    <div class="loader-ring"></div>
+    <div class="loader-ring"></div>
+    <div class="loader-inner">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="8" fill="#ffffff"/>
+        <circle cx="50" cy="50" r="21" stroke="#ffffff" stroke-width="3" opacity="0.7"/>
+        <circle cx="50" cy="50" r="34" stroke="#ffffff" stroke-width="2.4" opacity="0.42"/>
+        <circle cx="50" cy="50" r="46" stroke="#ffffff" stroke-width="1.8" opacity="0.2"/>
+      </svg>
+    </div>
+  </div>
+  <div class="loader-text">
+    <div class="loader-title">The Ritual</div>
+    <div class="loader-sub">SKINCARE RITUAL</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="app">
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="top-bar-mark">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="8" fill="#ffffff"/>
+        <circle cx="50" cy="50" r="21" stroke="#ffffff" stroke-width="3" opacity="0.7"/>
+        <circle cx="50" cy="50" r="34" stroke="#ffffff" stroke-width="2.4" opacity="0.42"/>
+        <circle cx="50" cy="50" r="46" stroke="#ffffff" stroke-width="1.8" opacity="0.2"/>
+      </svg>
+    </div>
+    <div class="top-bar-title">The Ritual</div>
+  </div>
+
+  <!-- HEADER -->
   <div class="header">
     <div class="header-top">
       <div>
-        <div class="header-label">Daily Ritual</div>
         <div class="header-day" id="headerDay">Wednesday</div>
         <div class="header-sub" id="headerSub">0 of 0 steps · Today</div>
       </div>
-      <div>
-        <svg width="60" height="60" class="progress-ring">
-          <circle class="ring-bg" cx="30" cy="30" r="24"/>
-          <circle class="ring-fill" cx="30" cy="30" r="24" id="ringFill"
-            stroke-dasharray="150.8" stroke-dashoffset="150.8"/>
-          <text x="30" y="30" class="ring-label" id="ringLabel"
-            transform="rotate(90 30 30)">0%</text>
+      <div class="progress-ring-wrap">
+        <svg width="68" height="68" class="progress-ring">
+          <circle class="ring-bg" cx="34" cy="34" r="28"/>
+          <circle class="ring-fill" cx="34" cy="34" r="28" id="ringFill"
+            stroke-dasharray="175.9" stroke-dashoffset="175.9"/>
+          <text x="34" y="34" class="ring-pct" id="ringLabel"
+            transform="rotate(90 34 34)">0%</text>
         </svg>
       </div>
     </div>
@@ -144,7 +225,7 @@
   <div class="footer"><button class="reset-btn" onclick="resetDay()">Reset today</button></div>
 </div>
 
-<!-- WASH SELECTION MODAL -->
+<!-- WASH MODAL -->
 <div class="modal-overlay" id="washModal">
   <div class="modal">
     <div class="modal-title">Hair Wash</div>
@@ -178,71 +259,67 @@
 <script>
 const DAYS = ['S','M','T','W','T','F','S'];
 const FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const CIRC = 2 * Math.PI * 24;
+const CIRC = 2 * Math.PI * 28;
+const WEBHOOK = 'https://script.google.com/macros/s/AKfycbyi-MdwBcruCN3q8o9AHv9BmYNwB4cIpsTpviH8bSojoAlQ72ZF0Zbp2RhEfMVpJkRP/exec';
 
-// ── Storage helpers ──────────────────────────────────────────────
+// ── Loading screen ────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    const loader = document.getElementById('loader');
+    const app = document.getElementById('app');
+    loader.classList.add('fade-out');
+    app.classList.add('visible');
+    setTimeout(() => { loader.style.display = 'none'; }, 600);
+  }, 2000);
+});
+
+// ── Storage ───────────────────────────────────────────────────────
 function calDateStr(dayIndex) {
   const now = new Date();
   const diff = dayIndex - now.getDay();
-  const t = new Date(now);
-  t.setDate(now.getDate() + diff);
+  const t = new Date(now); t.setDate(now.getDate() + diff);
   return t.toISOString().slice(0, 10);
 }
 function todayStr() { return new Date().toISOString().slice(0, 10); }
 function mondaySundayRange() {
-  const now = new Date();
-  const day = now.getDay(); // 0=Sun
+  const now = new Date(); const day = now.getDay();
   const mon = new Date(now); mon.setDate(now.getDate() - ((day + 6) % 7));
   const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
   return { mon: mon.toISOString().slice(0,10), sun: sun.toISOString().slice(0,10) };
 }
-function stepKey(d, s, i) { return `dr_${calDateStr(d)}_${s}_${i}`; }
+function stepKey(d,s,i) { return `dr_${calDateStr(d)}_${s}_${i}`; }
 function hairWashKey(d) { return `dr_hair_${calDateStr(d)}`; }
-function hairCheckedKey(d, i) { return `dr_hairc_${calDateStr(d)}_${i}`; }
+function hairCheckedKey(d,i) { return `dr_hairc_${calDateStr(d)}_${i}`; }
 function get(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
-function set(k, v) { try { localStorage.setItem(k, v); } catch(e) {} }
+function set(k,v) { try { localStorage.setItem(k,v); } catch(e) {} }
 
-// ── Dermroller tracking ──────────────────────────────────────────
-// Stored as JSON array of date strings in current Mon-Sun week
-function getDermrollerCount() {
-  const key = 'dr_dermroller_week';
-  try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) { return []; }
-}
+// ── Dermroller ────────────────────────────────────────────────────
+function getDermrollerDates() { try { return JSON.parse(localStorage.getItem('dr_dermroller_week') || '[]'); } catch(e) { return []; } }
 function saveDermrollerDates(arr) { set('dr_dermroller_week', JSON.stringify(arr)); }
 function cleanDermrollerDates() {
-  const { mon, sun } = mondaySundayRange();
-  const dates = getDermrollerCount().filter(d => d >= mon && d <= sun);
-  saveDermrollerDates(dates);
-  return dates;
+  const {mon,sun} = mondaySundayRange();
+  const dates = getDermrollerDates().filter(d => d >= mon && d <= sun);
+  saveDermrollerDates(dates); return dates;
 }
-function dermrollerUsedToday() {
-  const dates = cleanDermrollerDates();
-  return dates.includes(todayStr());
-}
+function dermrollerUsedToday() { return cleanDermrollerDates().includes(todayStr()); }
 function dermrollerCountThisWeek() { return cleanDermrollerDates().length; }
 function markDermrollerToday() {
-  const dates = cleanDermrollerDates();
-  const t = todayStr();
-  if (!dates.includes(t)) { dates.push(t); saveDermrollerDates(dates); }
+  const dates = cleanDermrollerDates(); const t = todayStr();
+  if(!dates.includes(t)) { dates.push(t); saveDermrollerDates(dates); }
 }
-function unmarkDermrollerToday() {
-  const dates = cleanDermrollerDates().filter(d => d !== todayStr());
-  saveDermrollerDates(dates);
-}
+function unmarkDermrollerToday() { saveDermrollerDates(cleanDermrollerDates().filter(d => d !== todayStr())); }
 
-// ── K18 tracking ─────────────────────────────────────────────────
+// ── K18 ───────────────────────────────────────────────────────────
 function getLastK18() { return get('dr_last_k18') || null; }
-function setLastK18(dateStr) { set('dr_last_k18', dateStr); }
+function setLastK18(d) { set('dr_last_k18', d); }
 function daysSinceK18() {
-  const last = getLastK18();
-  if (!last) return 999;
-  const diff = (new Date(todayStr()) - new Date(last)) / 86400000;
-  return Math.floor(diff);
+  const last = getLastK18(); if(!last) return 999;
+  return Math.floor((new Date(todayStr()) - new Date(last)) / 86400000);
 }
 function k18Dismissed() { return get('dr_k18_dismiss') === todayStr(); }
 function dismissK18() { set('dr_k18_dismiss', todayStr()); }
 
-// ── Skincare routine data ─────────────────────────────────────────
+// ── Routine data ──────────────────────────────────────────────────
 const SKINCARE = {
   am: [
     {n:'Vitamin C serum'},
@@ -257,14 +334,14 @@ const SKINCARE = {
     {n:'Neutrogena Water Gel', x:'Thin layer to rehydrate'},
   ],
   night: {
-    A: [ // Sun/Tue/Thu — exfoliation
+    A: [
       {n:'Elemis Cleansing Balm', x:'Step 1 of double cleanse'},
       {n:'Elemis Cleansing Milk', x:'Step 2 of double cleanse'},
       {n:'Elemis Dynamic Resurfacing Pad', x:'Exfoliation night — no azelaic tonight'},
       {n:'Cicalfate+', x:'Recovery — avoid eyelids (lash extensions)'},
       {n:'Heel care cream', opt:true},
     ],
-    B: [ // Mon/Wed/Fri — treatment
+    B: [
       {n:'Elemis Cleansing Balm', x:'Step 1 of double cleanse'},
       {n:'Elemis Cleansing Milk', x:'Step 2 of double cleanse'},
       {n:'Azelaic acid 10%', x:'Avoid upper lip area'},
@@ -273,7 +350,7 @@ const SKINCARE = {
       {n:'Neutrogena Water Gel'},
       {n:"Paula's Choice Peptide Moisturizer"},
     ],
-    SAT: [ // Saturday — mask
+    SAT: [
       {n:'Elemis Cleansing Balm', x:'Step 1 of double cleanse'},
       {n:'Elemis Cleansing Milk', x:'Step 2 of double cleanse'},
       {n:'Dr Jart mask', x:'Weekly mask treat — no actives tonight'},
@@ -283,79 +360,60 @@ const SKINCARE = {
   }
 };
 
-function getNightSteps(dayIndex) {
-  if (dayIndex === 6) return SKINCARE.night.SAT;
-  if ([0,2,4].includes(dayIndex)) return SKINCARE.night.A;
+function getNightSteps(d) {
+  if(d===6) return SKINCARE.night.SAT;
+  if([0,2,4].includes(d)) return SKINCARE.night.A;
   return SKINCARE.night.B;
 }
+function getNightType(d) {
+  if(d===6) return 'Mask (Sat)';
+  if([0,2,4].includes(d)) return 'Exfoliation (A)';
+  return 'Treatment (B)';
+}
 
-// ── Hair wash routines ────────────────────────────────────────────
 function getHairSteps(washType) {
   const canDermroll = dermrollerCountThisWeek() < 3;
-  const dermStep = canDermroll
-    ? {n:'Dermroller (scalp)', x:'Before minoxidil — max 3x/week', isDerm:true}
-    : null;
-
-  const base = []; // always ends with minoxidil
+  const dermStep = canDermroll ? {n:'Dermroller (scalp)', x:'Before minoxidil — max 3x/week', isDerm:true} : null;
   const mino = {n:'Foam minoxidil 5%'};
-
   switch(washType) {
-    case 'clean':
-      return [
-        {n:'OGX Coconut Mist pre-wash', x:'Apply 10 min before shower'},
-        {n:'Double shampoo — Dr. Groot'},
-        {n:'Dr. Groot scalp treatment', x:'Rinse-out conditioner'},
-        ...(dermStep ? [dermStep] : []),
-        mino,
-      ];
-    case 'deepclean':
-      return [
-        {n:'OGX Coconut Mist pre-wash', x:'Apply 10 min before shower'},
-        {n:'Double shampoo — Nizoral', x:'Anti-fungal scalp wash'},
-        {n:'Dove Intensive Moisture conditioner'},
-        {n:'Pantene Miracle Mask', x:'Leave a few mins, rinse'},
-        ...(dermStep ? [dermStep] : []),
-        mino,
-      ];
-    case 'hydration':
-      return [
-        {n:'OGX Coconut Mist pre-wash', x:'Apply 10 min before shower'},
-        {n:'Double shampoo — Dove Intensive Moisture'},
-        {n:'Dove Intensive Moisture conditioner'},
-        {n:'Dove Intensive Moisture Mask', x:'Leave a few mins, rinse'},
-        ...(dermStep ? [dermStep] : []),
-        mino,
-      ];
-    case 'glossy':
-      return [
-        {n:'OGX Coconut Mist pre-wash', x:'Apply 10 min before shower'},
-        {n:'Double shampoo — EverPure Glossing Shampoo'},
-        {n:'EverPure Glossing Conditioner'},
-        {n:'EverPure 5-min gloss treatment', x:'Leave 5 min, rinse'},
-        ...(dermStep ? [dermStep] : []),
-        mino,
-      ];
-    case 'bond':
-      return [
-        {n:'Double shampoo — Dr. Groot', x:'No pre-wash on K18 days'},
-        {n:'K18 treatment', x:'Leave 4 min — do not rinse out'},
-        {n:'Pantene leave-in conditioner'},
-        ...(dermStep ? [dermStep] : []),
-        mino,
-      ];
+    case 'clean': return [
+      {n:'OGX Coconut Mist pre-wash', x:'Apply 10 min before shower'},
+      {n:'Double shampoo — Dr. Groot'},
+      {n:'Dr. Groot scalp treatment', x:'Rinse-out conditioner'},
+      ...(dermStep?[dermStep]:[]), mino];
+    case 'deepclean': return [
+      {n:'OGX Coconut Mist pre-wash', x:'Apply 10 min before shower'},
+      {n:'Double shampoo — Nizoral', x:'Anti-fungal scalp wash'},
+      {n:'Dove Intensive Moisture conditioner'},
+      {n:'Pantene Miracle Mask', x:'Leave a few mins, rinse'},
+      ...(dermStep?[dermStep]:[]), mino];
+    case 'hydration': return [
+      {n:'OGX Coconut Mist pre-wash', x:'Apply 10 min before shower'},
+      {n:'Double shampoo — Dove Intensive Moisture'},
+      {n:'Dove Intensive Moisture conditioner'},
+      {n:'Dove Intensive Moisture Mask', x:'Leave a few mins, rinse'},
+      ...(dermStep?[dermStep]:[]), mino];
+    case 'glossy': return [
+      {n:'OGX Coconut Mist pre-wash', x:'Apply 10 min before shower'},
+      {n:'Double shampoo — EverPure Glossing Shampoo'},
+      {n:'EverPure Glossing Conditioner'},
+      {n:'EverPure 5-min gloss treatment', x:'Leave 5 min, rinse'},
+      ...(dermStep?[dermStep]:[]), mino];
+    case 'bond': return [
+      {n:'Double shampoo — Dr. Groot', x:'No pre-wash on K18 days'},
+      {n:'K18 treatment', x:'Leave 4 min — do not rinse out'},
+      {n:'Pantene leave-in conditioner'},
+      ...(dermStep?[dermStep]:[]), mino];
     default: return [];
   }
 }
 
 const WASH_LABELS = {
-  clean: '🌿 Clean',
-  deepclean: '🧴 Deep Clean',
-  hydration: '💧 Hydration',
-  glossy: '✨ Glossy',
-  bond: '💊 Bond Treatment',
+  clean:'🌿 Clean', deepclean:'🧴 Deep Clean',
+  hydration:'💧 Hydration', glossy:'✨ Glossy', bond:'💊 Bond Treatment',
 };
 
-// ── App state ─────────────────────────────────────────────────────
+// ── State ─────────────────────────────────────────────────────────
 const today = new Date().getDay();
 let active = today;
 let checked = {};
@@ -364,22 +422,13 @@ let openSecs = {am:true, midday:false, night:false, hair:false};
 
 function loadChecked(d) {
   checked = {};
-  ['am','night'].forEach(s => {
-    const steps = s === 'am' ? SKINCARE.am : getNightSteps(d);
-    steps.forEach((_,i) => {
-      if(get(stepKey(d,s,i)) === '1') checked[s+'_'+i] = true;
-    });
-  });
-  SKINCARE.midday.forEach((_,i) => {
-    if(get(stepKey(d,'midday',i)) === '1') checked['midday_'+i] = true;
-  });
-  // hair
+  SKINCARE.am.forEach((_,i) => { if(get(stepKey(d,'am',i))==='1') checked['am_'+i]=true; });
+  SKINCARE.midday.forEach((_,i) => { if(get(stepKey(d,'midday',i))==='1') checked['midday_'+i]=true; });
+  getNightSteps(d).forEach((_,i) => { if(get(stepKey(d,'night',i))==='1') checked['night_'+i]=true; });
   hairChecked = {};
   const wash = get(hairWashKey(d));
-  if(wash) {
-    getHairSteps(wash).forEach((_,i) => {
-      if(get(hairCheckedKey(d,i)) === '1') hairChecked[i] = true;
-    });
+  if(wash && wash !== 'null') {
+    getHairSteps(wash).forEach((_,i) => { if(get(hairCheckedKey(d,i))==='1') hairChecked[i]=true; });
   }
 }
 
@@ -387,33 +436,24 @@ function saveStep(d,s,i,v) { set(stepKey(d,s,i), v?'1':'0'); }
 function saveHairStep(d,i,v) { set(hairCheckedKey(d,i), v?'1':'0'); }
 
 function toggleStep(s,i) {
-  const k = s+'_'+i;
-  checked[k] = !checked[k];
-  saveStep(active,s,i,checked[k]);
-  render();
+  const k=s+'_'+i; checked[k]=!checked[k];
+  saveStep(active,s,i,checked[k]); render();
 }
-
 function toggleHairStep(i, isDerm) {
-  const wash = get(hairWashKey(active));
-  if(!wash) return;
-  hairChecked[i] = !hairChecked[i];
-  saveHairStep(active, i, hairChecked[i]);
-  if(isDerm) {
-    if(hairChecked[i]) markDermrollerToday();
-    else unmarkDermrollerToday();
-  }
+  const wash=get(hairWashKey(active)); if(!wash) return;
+  hairChecked[i]=!hairChecked[i];
+  saveHairStep(active,i,hairChecked[i]);
+  if(isDerm) { if(hairChecked[i]) markDermrollerToday(); else unmarkDermrollerToday(); }
   render();
 }
 
 function resetDay() {
   if(!confirm('Reset all steps for '+FULL[active]+'?')) return;
   ['am','midday','night'].forEach(s => {
-    const steps = s==='am' ? SKINCARE.am : s==='midday' ? SKINCARE.midday : getNightSteps(active);
+    const steps = s==='am'?SKINCARE.am:s==='midday'?SKINCARE.midday:getNightSteps(active);
     steps.forEach((_,i) => { checked[s+'_'+i]=false; saveStep(active,s,i,false); });
   });
-  hairChecked = {};
-  set(hairWashKey(active), null);
-  render();
+  hairChecked={}; set(hairWashKey(active),null); render();
 }
 
 // ── Modal ─────────────────────────────────────────────────────────
@@ -422,19 +462,14 @@ function closeModal() { document.getElementById('washModal').classList.remove('o
 function selectWash(type) {
   closeModal();
   const prev = get(hairWashKey(active));
-  if(prev && prev !== type) {
-    // clear previous hair step checks if changing type
-    const prevSteps = getHairSteps(prev);
-    prevSteps.forEach((_,i) => set(hairCheckedKey(active,i), '0'));
-    hairChecked = {};
+  if(prev && prev !== type && prev !== 'null') {
+    getHairSteps(prev).forEach((_,i) => set(hairCheckedKey(active,i),'0'));
+    hairChecked={};
   }
   set(hairWashKey(active), type);
-  if(type === 'bond') setLastK18(calDateStr(active));
+  if(type==='bond') setLastK18(calDateStr(active));
   render();
-  setTimeout(()=>{
-    const el = document.getElementById('sec-hair');
-    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
-  }, 80);
+  setTimeout(()=>{ const el=document.getElementById('sec-hair'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); },80);
 }
 
 // ── K18 banner ────────────────────────────────────────────────────
@@ -442,7 +477,7 @@ function renderK18Banner() {
   const el = document.getElementById('k18Banner');
   const days = daysSinceK18();
   if(days >= 12 && !k18Dismissed()) {
-    const daysText = days === 999 ? 'No K18 wash logged yet — start your 12-day cycle.' : `It's been ${days} days since your last bond treatment.`;
+    const daysText = days===999 ? 'No K18 wash logged yet — start your 12-day cycle.' : `It's been ${days} days since your last bond treatment.`;
     el.innerHTML = `
       <div class="k18-banner">
         <div class="k18-banner-icon-wrap">💊</div>
@@ -452,120 +487,93 @@ function renderK18Banner() {
         </div>
         <button class="k18-banner-btn" onclick="openSecs.hair=true; selectWash('bond');">Log K18</button>
       </div>`;
-  } else {
-    el.innerHTML = '';
-  }
+  } else { el.innerHTML=''; }
 }
 
-// ── Count helpers ─────────────────────────────────────────────────
-function countSkincare(d) {
-  let total=0, done=0;
-  ['am','midday','night'].forEach(s => {
-    const steps = s==='am' ? SKINCARE.am : s==='midday' ? SKINCARE.midday : getNightSteps(d);
-    steps.forEach((_,i) => { total++; if(checked[s+'_'+i]) done++; });
-  });
-  return {total,done};
-}
-function countHair(d) {
-  const wash = get(hairWashKey(d));
-  if(!wash) return {total:0,done:0};
-  const steps = getHairSteps(wash);
-  let total=steps.length, done=0;
-  steps.forEach((_,i) => { if(hairChecked[i]) done++; });
-  return {total,done};
-}
-function countAll(d) {
-  const s = countSkincare(d); const h = countHair(d);
-  return {total: s.total+h.total, done: s.done+h.done};
-}
+// ── Counts ────────────────────────────────────────────────────────
 function countSec(s) {
-  if(s==='hair') return countHair(active);
-  const steps = s==='am' ? SKINCARE.am : s==='midday' ? SKINCARE.midday : getNightSteps(active);
-  let total=steps.length, done=0;
-  steps.forEach((_,i) => { if(checked[s+'_'+i]) done++; });
+  if(s==='hair') {
+    const wash=get(hairWashKey(active));
+    if(!wash||wash==='null') return {total:0,done:0};
+    const steps=getHairSteps(wash);
+    return {total:steps.length, done:steps.filter((_,i)=>hairChecked[i]).length};
+  }
+  const steps=s==='am'?SKINCARE.am:s==='midday'?SKINCARE.midday:getNightSteps(active);
+  return {total:steps.length, done:steps.filter((_,i)=>checked[s+'_'+i]).length};
+}
+function countAll() {
+  let total=0,done=0;
+  ['am','midday','night','hair'].forEach(s=>{ const c=countSec(s); total+=c.total; done+=c.done; });
   return {total,done};
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────
 function buildTabs() {
-  const el = document.getElementById('dayTabs');
-  el.innerHTML = '';
-  DAYS.forEach((d,i) => {
-    const btn = document.createElement('button');
-    btn.className = 'day-btn' + (i===active?' active':'') + (i===today?' is-today':'');
-    btn.innerHTML = `<div class="day-circle"><span class="day-letter">${d}</span></div><div class="day-dot"></div>`;
-    btn.onclick = () => { active=i; loadChecked(i); openSecs={am:true,midday:false,night:false,hair:false}; render(); buildTabs(); };
+  const el=document.getElementById('dayTabs'); el.innerHTML='';
+  DAYS.forEach((d,i)=>{
+    const btn=document.createElement('button');
+    btn.className='day-btn'+(i===active?' active':'')+(i===today?' is-today':'');
+    btn.innerHTML=`<div class="day-circle"><span class="day-letter">${d}</span></div><div class="day-dot"></div>`;
+    btn.onclick=()=>{ active=i; loadChecked(i); openSecs={am:true,midday:false,night:false,hair:false}; render(); buildTabs(); };
     el.appendChild(btn);
   });
 }
 
-// ── Main render ───────────────────────────────────────────────────
+// ── Render ────────────────────────────────────────────────────────
 function render() {
-  const isToday = active === today;
   document.getElementById('headerDay').textContent = FULL[active];
-  const {total,done} = countAll(active);
-  const pct = total ? Math.round(done/total*100) : 0;
+  const {total,done} = countAll();
+  const pct = total?Math.round(done/total*100):0;
   const now = new Date();
-  const dateStr = now.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-  document.getElementById('headerSub').textContent = `${done} of ${total} steps · ${isToday?'Today, '+dateStr:FULL[active]}`;
-  const offset = CIRC - (pct/100)*CIRC;
+  const ds = now.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  document.getElementById('headerSub').textContent = `${done} of ${total} steps · ${active===today?'Today, '+ds:FULL[active]}`;
+  const offset = CIRC-(pct/100)*CIRC;
   document.getElementById('ringFill').style.strokeDashoffset = offset;
   document.getElementById('ringLabel').textContent = pct+'%';
-
   renderK18Banner();
 
-  const cont = document.getElementById('sections');
-  cont.innerHTML = '';
-
-  const SECS = [
-    {key:'am',     label:'Morning',        dot:'sec-dot-am'},
-    {key:'midday', label:'Midday Refresh',  dot:'sec-dot-mid'},
-    {key:'night',  label:'Night',           dot:'sec-dot-night'},
-    {key:'hair',   label:'Hair',            dot:'sec-dot-hair'},
+  const cont=document.getElementById('sections'); cont.innerHTML='';
+  const SECS=[
+    {key:'am',label:'Morning',dot:'sec-dot-am'},
+    {key:'midday',label:'Midday Refresh',dot:'sec-dot-mid'},
+    {key:'night',label:'Night',dot:'sec-dot-night'},
+    {key:'hair',label:'Hair',dot:'sec-dot-hair'},
   ];
 
-  SECS.forEach(({key:s, label, dot}) => {
-    const {total:st, done:sd} = countSec(s);
-    const isOpen = openSecs[s];
-    const card = document.createElement('div');
-    card.className = 'section-card' + (isOpen?' open':'');
-    card.id = 'sec-'+s;
+  SECS.forEach(({key:s,label,dot})=>{
+    const {total:st,done:sd}=countSec(s);
+    const isOpen=openSecs[s];
+    const card=document.createElement('div');
+    card.className='section-card'+(isOpen?' open':'');
+    card.id='sec-'+s;
 
-    const hdr = document.createElement('div');
-    hdr.className = 'section-header';
-    hdr.innerHTML = `
+    const hdr=document.createElement('div');
+    hdr.className='section-header';
+    hdr.innerHTML=`
       <div class="section-header-left">
         <div class="sec-dot ${dot}"></div>
         <span class="section-title">${label}</span>
       </div>
       <div class="section-count">${sd} / ${st} <span class="chevron">▼</span></div>`;
-    hdr.onclick = () => {
-      const wasOpen = openSecs[s];
-      Object.keys(openSecs).forEach(k => openSecs[k]=false);
-      openSecs[s] = !wasOpen;
-      render();
-      if(!wasOpen) setTimeout(()=>{ const el=document.getElementById('sec-'+s); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }, 50);
+    hdr.onclick=()=>{
+      const wasOpen=openSecs[s];
+      Object.keys(openSecs).forEach(k=>openSecs[k]=false);
+      openSecs[s]=!wasOpen; render();
+      if(!wasOpen) setTimeout(()=>{ const el=document.getElementById('sec-'+s); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); },50);
     };
     card.appendChild(hdr);
 
-    const body = document.createElement('div');
-    body.className = 'section-body';
-
-    if(s === 'hair') {
-      renderHairBody(body);
-    } else {
-      const steps = s==='am' ? SKINCARE.am : s==='midday' ? SKINCARE.midday : getNightSteps(active);
-      steps.forEach((step,i) => {
-        const isDone = !!checked[s+'_'+i];
-        const div = document.createElement('div');
-        div.className = 'step' + (isDone?' done':'');
-        div.onclick = () => toggleStep(s,i);
-        div.innerHTML = `
-          <div class="check-circle">
-            <svg class="check-icon" width="12" height="9" viewBox="0 0 12 9" fill="none">
-              <path d="M1 4.5L4.5 8L11 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
+    const body=document.createElement('div'); body.className='section-body';
+    if(s==='hair') { renderHairBody(body); }
+    else {
+      const steps=s==='am'?SKINCARE.am:s==='midday'?SKINCARE.midday:getNightSteps(active);
+      steps.forEach((step,i)=>{
+        const isDone=!!checked[s+'_'+i];
+        const div=document.createElement('div');
+        div.className='step'+(isDone?' done':'');
+        div.onclick=()=>toggleStep(s,i);
+        div.innerHTML=`
+          <div class="check-circle"><svg class="check-icon" width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4.5 8L11 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <div class="step-body-text">
             <div class="step-name">${step.n}${step.opt?'<span class="optional-tag">Optional</span>':''}</div>
             ${step.x?`<div class="step-note">${step.x}</div>`:''}
@@ -573,121 +581,75 @@ function render() {
         body.appendChild(div);
       });
     }
-
     card.appendChild(body);
     cont.appendChild(card);
   });
 }
 
 function renderHairBody(body) {
-  const wash = get(hairWashKey(active));
-  const dCount = dermrollerCountThisWeek();
-
-  if(!wash || wash === 'null') {
-    const wrap = document.createElement('div');
-    wrap.className = 'hair-empty';
-    wrap.innerHTML = `<button class="hair-wash-btn" onclick="openModal()">+ Log a hair wash</button>`;
-    body.appendChild(wrap);
-    return;
+  const wash=get(hairWashKey(active));
+  const dCount=dermrollerCountThisWeek();
+  if(!wash||wash==='null') {
+    const wrap=document.createElement('div'); wrap.className='hair-empty';
+    wrap.innerHTML=`<button class="hair-wash-btn" onclick="openModal()">+ Log a hair wash</button>`;
+    body.appendChild(wrap); return;
   }
-
-  // dermroller note if maxed
-  if(dCount >= 3 && !dermrollerUsedToday()) {
-    const note = document.createElement('div');
-    note.className = 'dermroller-note';
-    note.textContent = `Dermroller skipped — already used 3× this week`;
-    body.appendChild(note);
+  if(dCount>=3 && !dermrollerUsedToday()) {
+    const note=document.createElement('div'); note.className='dermroller-note';
+    note.textContent=`Dermroller skipped — already used 3× this week`; body.appendChild(note);
   }
-
-  const steps = getHairSteps(wash);
-  steps.forEach((step,i) => {
-    const isDone = !!hairChecked[i];
-    const div = document.createElement('div');
-    div.className = 'step' + (isDone?' done':'');
-    div.onclick = () => toggleHairStep(i, !!step.isDerm);
-    div.innerHTML = `
-      <div class="check-circle">
-        <svg class="check-icon" width="12" height="9" viewBox="0 0 12 9" fill="none">
-          <path d="M1 4.5L4.5 8L11 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
+  const steps=getHairSteps(wash);
+  steps.forEach((step,i)=>{
+    const isDone=!!hairChecked[i];
+    const div=document.createElement('div');
+    div.className='step'+(isDone?' done':'');
+    div.onclick=()=>toggleHairStep(i,!!step.isDerm);
+    div.innerHTML=`
+      <div class="check-circle"><svg class="check-icon" width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4.5 8L11 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <div class="step-body-text">
         <div class="step-name">${step.n}</div>
         ${step.x?`<div class="step-note">${step.x}</div>`:''}
       </div>`;
     body.appendChild(div);
   });
-
-  // logged label + change button
-  const logged = document.createElement('div');
-  logged.className = 'hair-logged';
-  logged.innerHTML = `
+  const logged=document.createElement('div'); logged.className='hair-logged';
+  logged.innerHTML=`
     <div class="hair-type-label">${WASH_LABELS[wash]}</div>
     <button class="hair-change-btn" onclick="openModal();">Change wash type</button>`;
   body.appendChild(logged);
 }
 
-// ── Google Sheets logging ─────────────────────────────────────────
-const WEBHOOK = 'https://script.google.com/macros/s/AKfycbyi-MdwBcruCN3q8o9AHv9BmYNwB4cIpsTpviH8bSojoAlQ72ZF0Zbp2RhEfMVpJkRP/exec';
-
-function getNightType(d) {
-  if(d===6) return 'Mask (Sat)';
-  if([0,2,4].includes(d)) return 'Exfoliation (A)';
-  return 'Treatment (B)';
-}
-
+// ── Google Sheets ─────────────────────────────────────────────────
 async function saveSummary() {
-  const btn = document.getElementById('saveBtn');
-  const status = document.getElementById('saveStatus');
-  btn.disabled = true;
-  status.textContent = 'Saving…';
-
-  // build counts for each section
-  const amSteps = SKINCARE.am;
-  const amDone = amSteps.filter((_,i) => checked['am_'+i]).length;
-
-  const midSteps = SKINCARE.midday;
-  const midDone = midSteps.filter((_,i) => checked['midday_'+i]).length;
-
-  const nightSteps = getNightSteps(active);
-  const nightDone = nightSteps.filter((_,i) => checked['night_'+i]).length;
-
-  const wash = get(hairWashKey(active)) || 'None';
-  const hairSteps = wash !== 'None' ? getHairSteps(wash) : [];
-  const hairDone = hairSteps.filter((_,i) => hairChecked[i]).length;
-
-  const totalSteps = amSteps.length + midSteps.length + nightSteps.length + hairSteps.length;
-  const totalDone = amDone + midDone + nightDone + hairDone;
-  const pct = totalSteps ? Math.round(totalDone/totalSteps*100)+'%' : '0%';
-
-  const now = new Date();
-  const payload = {
-    date: calDateStr(active),
-    day: FULL[active],
-    morning: `${amDone}/${amSteps.length}`,
-    midday: `${midDone}/${midSteps.length}`,
-    nightType: getNightType(active),
-    night: `${nightDone}/${nightSteps.length}`,
-    hairWash: WASH_LABELS[wash] || 'None',
-    hair: hairSteps.length ? `${hairDone}/${hairSteps.length}` : 'No wash',
-    overall: pct,
-    notes: '',
+  const btn=document.getElementById('saveBtn');
+  const status=document.getElementById('saveStatus');
+  btn.disabled=true; status.textContent='Saving…';
+  const amDone=SKINCARE.am.filter((_,i)=>checked['am_'+i]).length;
+  const midDone=SKINCARE.midday.filter((_,i)=>checked['midday_'+i]).length;
+  const nightSteps=getNightSteps(active);
+  const nightDone=nightSteps.filter((_,i)=>checked['night_'+i]).length;
+  const wash=get(hairWashKey(active))||'None';
+  const hairSteps=wash!=='None'&&wash!=='null'?getHairSteps(wash):[];
+  const hairDone=hairSteps.filter((_,i)=>hairChecked[i]).length;
+  const totalSteps=SKINCARE.am.length+SKINCARE.midday.length+nightSteps.length+hairSteps.length;
+  const totalDone=amDone+midDone+nightDone+hairDone;
+  const payload={
+    date:calDateStr(active), day:FULL[active],
+    morning:`${amDone}/${SKINCARE.am.length}`,
+    midday:`${midDone}/${SKINCARE.midday.length}`,
+    nightType:getNightType(active),
+    night:`${nightDone}/${nightSteps.length}`,
+    hairWash:WASH_LABELS[wash]||'None',
+    hair:hairSteps.length?`${hairDone}/${hairSteps.length}`:'No wash',
+    overall:totalSteps?Math.round(totalDone/totalSteps*100)+'%':'0%',
+    notes:'',
   };
-
   try {
-    await fetch(WEBHOOK, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload),
-    });
-    status.textContent = '✓ Saved to Google Sheets';
-    set('dr_saved_'+calDateStr(active), '1');
-    setTimeout(()=>{ status.textContent=''; }, 3000);
-  } catch(err) {
-    status.textContent = 'Could not save — check your connection';
-  }
-  btn.disabled = false;
+    await fetch(WEBHOOK,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    status.textContent='✓ Saved to Google Sheets';
+    setTimeout(()=>{ status.textContent=''; },3000);
+  } catch(err) { status.textContent='Could not save — check your connection'; }
+  btn.disabled=false;
 }
 
 // ── Init ──────────────────────────────────────────────────────────
